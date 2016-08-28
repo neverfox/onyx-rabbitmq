@@ -1,8 +1,9 @@
 (ns onyx.plugin.rabbitmq-output
-  (:require [onyx.peer.function :as function]
-            [onyx.peer.pipeline-extensions :as p-ext]
-            [onyx.static.default-vals :refer [defaults arg-or-default]]
-            [taoensso.timbre :refer [debug info] :as timbre]))
+  (:require
+   [onyx.peer.function :as function]
+   [onyx.peer.pipeline-extensions :as p-ext]
+   [onyx.static.default-vals :refer [arg-or-default defaults]]
+   [taoensso.timbre :as timbre :refer [debug info]]))
 
 (defn inject-writer
   [event lifecycle]

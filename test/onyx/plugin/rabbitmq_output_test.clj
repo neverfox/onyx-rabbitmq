@@ -1,10 +1,13 @@
 (ns onyx.plugin.rabbitmq-output-test
-  (:require [clojure.core.async :refer [chan >!! <!! close! sliding-buffer]]
-            [clojure.test :refer [deftest is testing]]
-            [taoensso.timbre :refer [info]]
-            [onyx.plugin.core-async]
-            [onyx.plugin.rabbitmq-output]
-            [onyx.api]))
+  (:require
+   [clojure.core.async :refer [<!! >!! chan close! sliding-buffer]]
+   [clojure.test :refer [deftest is testing]]
+   [onyx.api]
+   [onyx.plugin.core-async]
+   [onyx.plugin.rabbitmq-output]
+   [taoensso.timbre :as timbre :refer [info]]))
+
+(timbre/set-level! :debug)
 
 (def id (java.util.UUID/randomUUID))
 

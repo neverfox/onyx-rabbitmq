@@ -1,15 +1,17 @@
 (ns onyx.plugin.rabbit
-  (:require [less.awful.ssl :as awful]
-            [langohr.core :as rmq]
-            [langohr.channel :as lch]
-            [langohr.queue :as lq]
-            [langohr.consumers :as lc]
-            [langohr.basic :as lb]
-            [clojure.core.async :refer [>!! chan go-loop <!]]
-            [clojure.edn :as edn]
-            [taoensso.timbre :refer [debug info] :as timbre])
-  (:import (java.io FileNotFoundException)
-           (java.security.cert CertificateException)))
+  (:require
+   [clojure.core.async :refer [<! >!! chan go-loop]]
+   [clojure.edn :as edn]
+   [langohr.basic :as lb]
+   [langohr.channel :as lch]
+   [langohr.consumers :as lc]
+   [langohr.core :as rmq]
+   [langohr.queue :as lq]
+   [less.awful.ssl :as awful]
+   [taoensso.timbre :as timbre :refer [debug info]])
+  (:import
+   (java.io FileNotFoundException)
+   (java.security.cert CertificateException)))
 
 (defn edn-serializer
   [data]

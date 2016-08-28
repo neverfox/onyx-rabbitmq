@@ -1,17 +1,17 @@
 (ns onyx.plugin.rabbitmq-input-test
-  (:require [clojure.core.async :refer [chan >!! <!! close! sliding-buffer]]
-            [clojure.test :refer [deftest is testing]]
-            [taoensso.timbre :refer [info]]
-            [onyx.plugin.core-async :refer [take-segments!]]
-            [onyx.plugin.rabbitmq-input :as rmq-plugin]
-            [onyx.plugin.rabbit :as rmq]
-            [clojure.core.async :refer [>!!]]
-            [environ.core :refer [env]]
-            [onyx.api]))
+  (:require
+   [clojure.core.async :refer [<!! >!! chan close! sliding-buffer]]
+   [clojure.test :refer [deftest is testing]]
+   [environ.core :refer [env]]
+   [onyx.api]
+   [onyx.plugin.core-async :refer [take-segments!]]
+   [onyx.plugin.rabbit :as rmq]
+   [onyx.plugin.rabbitmq-input :as rmq-plugin]
+   [taoensso.timbre :as timbre :refer [info]]))
+
+(timbre/set-level! :debug)
 
 (def id (java.util.UUID/randomUUID))
-
-(taoensso.timbre/set-level! :debug)
 
 (def env-config
   {:onyx/tenancy-id       id

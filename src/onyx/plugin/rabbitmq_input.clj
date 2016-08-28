@@ -1,11 +1,12 @@
 (ns onyx.plugin.rabbitmq-input
-  (:require [onyx.peer.function :as function]
-            [onyx.peer.pipeline-extensions :as p-ext]
-            [onyx.static.default-vals :refer [defaults arg-or-default]]
-            [onyx.types :as t]
-            [taoensso.timbre :refer [debug info] :as timbre]
-            [onyx.plugin.rabbit :as rmq]
-            [clojure.core.async :refer [chan timeout alts!! <!!]]))
+  (:require
+   [clojure.core.async :refer [<!! alts!! chan timeout]]
+   [onyx.peer.function :as function]
+   [onyx.peer.pipeline-extensions :as p-ext]
+   [onyx.plugin.rabbit :as rmq]
+   [onyx.static.default-vals :refer [arg-or-default defaults]]
+   [onyx.types :as t]
+   [taoensso.timbre :as timbre :refer [debug info]]))
 
 (defn input-drained? [pending-messages batch]
   (and (= 1 (count @pending-messages))
