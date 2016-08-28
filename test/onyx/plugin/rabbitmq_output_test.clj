@@ -9,20 +9,20 @@
 (def id (java.util.UUID/randomUUID))
 
 (def env-config
-  {:onyx/tenancy-id id
-   :zookeeper/address "127.0.0.1:2188"
-   :zookeeper/server? true
+  {:onyx/tenancy-id       id
+   :zookeeper/address     "127.0.0.1:2188"
+   :zookeeper/server?     true
    :zookeeper.server/port 2188})
 
 (def peer-config
-  {:onyx/tenancy-id id
-   :zookeeper/address "127.0.0.1:2188"
-   :onyx.peer/job-scheduler :onyx.job-scheduler/greedy
+  {:onyx/tenancy-id                       id
+   :zookeeper/address                     "127.0.0.1:2188"
+   :onyx.peer/job-scheduler               :onyx.job-scheduler/greedy
    :onyx.messaging.aeron/embedded-driver? true
-   :onyx.messaging/allow-short-circuit? false
-   :onyx.messaging/impl :aeron
-   :onyx.messaging/peer-port-range [40200 40260]
-   :onyx.messaging/bind-addr "localhost"})
+   :onyx.messaging/allow-short-circuit?   false
+   :onyx.messaging/impl                   :aeron
+   :onyx.messaging/peer-port-range        [40200 40260]
+   :onyx.messaging/bind-addr              "localhost"})
 
 (def env (onyx.api/start-env env-config))
 
@@ -33,21 +33,21 @@
 (def batch-size 20)
 
 (def catalog
-  [{:onyx/name :in
-    :onyx/plugin :onyx.plugin.core-async/input
-    :onyx/type :input
-    :onyx/medium :core.async
+  [{:onyx/name       :in
+    :onyx/plugin     :onyx.plugin.core-async/input
+    :onyx/type       :input
+    :onyx/medium     :core.async
     :onyx/batch-size batch-size
-    :onyx/max-peers 1
-    :onyx/doc "Reads segments from a core.async channel"}
+    :onyx/max-peers  1
+    :onyx/doc        "Reads segments from a core.async channel"}
 
-   {:onyx/name :out
-    :onyx/plugin :onyx.plugin.rabbitmq-output/output
-    :onyx/type :output
-    :onyx/medium :rabbitmq
+   {:onyx/name       :out
+    :onyx/plugin     :onyx.plugin.rabbitmq-output/output
+    :onyx/type       :output
+    :onyx/medium     :rabbitmq
     :onyx/batch-size batch-size
-    :onyx/max-peers 1
-    :onyx/doc "Documentation for your datasink"}])
+    :onyx/max-peers  1
+    :onyx/doc        "Documentation for your datasink"}])
 
 (def workflow [[:in :out]])
 
@@ -68,13 +68,13 @@
   {:lifecycle/before-task-start inject-out-datasink})
 
 (def lifecycles
-  [{:lifecycle/task :in
+  [{:lifecycle/task  :in
     :lifecycle/calls ::in-calls}
-   {:lifecycle/task :in
+   {:lifecycle/task  :in
     :lifecycle/calls :onyx.plugin.core-async/reader-calls}
-   {:lifecycle/task :out
+   {:lifecycle/task  :out
     :lifecycle/calls ::out-calls}
-   {:lifecycle/task :out
+   {:lifecycle/task  :out
     :lifecycle/calls :onyx.plugin.rabbitmq-output/writer-calls}])
 
 (doseq [n (range n-messages)]
@@ -87,11 +87,11 @@
 
 (def job-info 
   (onyx.api/submit-job
-    peer-config
-    {:catalog catalog
-     :workflow workflow
-     :lifecycles lifecycles
-     :task-scheduler :onyx.task-scheduler/balanced}))
+   peer-config
+   {:catalog        catalog
+    :workflow       workflow
+    :lifecycles     lifecycles
+    :task-scheduler :onyx.task-scheduler/balanced}))
 
 (info "Awaiting job completion")
 

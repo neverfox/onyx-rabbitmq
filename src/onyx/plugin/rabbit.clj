@@ -55,9 +55,9 @@
 
 (defn start-consumer
   [params deserialize-fn write-to-ch]
-  (let [conn   (rmq/connect (params->config params))
-        ch     (lch/open conn)
-        qname  (:queue-name params)]
+  (let [conn  (rmq/connect (params->config params))
+        ch    (lch/open conn)
+        qname (:queue-name params)]
     (info "Starting consumer on queue"  qname)
     (lq/declare ch qname {:exclusive false :durable true :auto-delete false})
     (lc/subscribe ch qname (message-handler write-to-ch deserialize-fn) {:auto-ack false})
@@ -66,9 +66,9 @@
 (defn start-publisher
   [params serialize-fn]
   (let [write-ch (chan 2)
-        conn   (rmq/connect (params->config params))
-        ch     (lch/open conn)
-        qname  (:queue-name params)]
+        conn     (rmq/connect (params->config params))
+        ch       (lch/open conn)
+        qname    (:queue-name params)]
     (lq/declare ch qname {:exclusive false :durable true :auto-delete false})
     (go-loop []
       (let [msg (<! write-ch)]

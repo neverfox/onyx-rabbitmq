@@ -21,12 +21,12 @@
     (function/write-batch event))
 
   (read-batch [_ {:keys [rabbitmq/example-datasource rabbit/in-ch rabbit/context] :as event}]
-    (let [pending (count @pending-messages)
-          max-segments (min (- max-pending pending) batch-size)
+    (let [pending          (count @pending-messages)
+          max-segments     (min (- max-pending pending) batch-size)
           ;; Read a batch of up to batch-size from your data-source
           ;; For data-sources which enable read timeouts, please
           ;; make sure to pass batch-timeout into the read call
-          timeout-ch (timeout batch-timeout)
+          timeout-ch       (timeout batch-timeout)
           [batch new-tags] (if (pos? max-segments)
                              (loop [segments [] new-delivery-tags [] cnt 0]
                                (if (= cnt max-segments)
@@ -37,7 +37,7 @@
                                                   (t/input message-id
                                                            (:payload message)))
                                             (conj new-delivery-tags
-                                                  {:id message-id
+                                                  {:id           message-id
                                                    :delivery-tag (:delivery-tag message)})
                                             (inc cnt)))
                                    [segments new-delivery-tags])))
@@ -97,34 +97,34 @@
 ;; from your task-map here, in order to improve the performance of your plugin
 ;; Extending the function below is likely good for most use cases.
 (defn input [event]
-  (let [task-map (:onyx.core/task-map event)
-        max-pending (arg-or-default :onyx/max-pending task-map)
-        batch-size (:onyx/batch-size task-map)
-        batch-timeout (arg-or-default :onyx/batch-timeout task-map)
+  (let [task-map         (:onyx.core/task-map event)
+        max-pending      (arg-or-default :onyx/max-pending task-map)
+        batch-size       (:onyx/batch-size task-map)
+        batch-timeout    (arg-or-default :onyx/batch-timeout task-map)
         pending-messages (atom {})
-        delivery-tags (atom {})
-        drained? (atom false)]
+        delivery-tags    (atom {})
+        drained?         (atom false)]
     (->RabbitInput max-pending batch-size batch-timeout pending-messages delivery-tags drained?)))
 
 (defn task-map->rabbit-params
   [{:keys [rabbit/queue-name rabbit/host rabbit/port rabbit/key rabbit/crt rabbit/ca-crt]}]
   {:queue-name queue-name
-   :host host :port port
-   :key key :crt crt :ca-crt ca-crt})
+   :host       host :port port
+   :key        key  :crt  crt :ca-crt ca-crt})
 
 (defn resolve-keyword
   [kw]
   (let [namespace (symbol (namespace kw))
-        f (symbol (name kw))]
+        f         (symbol (name kw))]
     (ns-resolve namespace f)))
 
 (defn start-rabbit-consumer
   [{:keys [onyx.core/task-map] :as event} lifecycle]
-  (let [ch (chan 1000)
+  (let [ch           (chan 1000)
         deserializer (resolve-keyword (:rabbit/deserializer task-map))
-        ctx (rmq/start-consumer (task-map->rabbit-params task-map) deserializer ch)
+        ctx          (rmq/start-consumer (task-map->rabbit-params task-map) deserializer ch)
         ]
-    {:rabbit/in-ch ch
+    {:rabbit/in-ch   ch
      :rabbit/context ctx}))
 
 (defn stop-rabbit-connection
@@ -133,4 +133,4 @@
 
 (def reader-calls
   {:lifecycle/before-task-start start-rabbit-consumer
-   :lifecycle/after-task-stop stop-rabbit-connection})
+   :lifecycle/after-task-stop   stop-rabbit-connection})

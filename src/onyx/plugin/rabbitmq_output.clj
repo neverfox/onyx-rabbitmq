@@ -21,11 +21,11 @@
   ;; Read batch can generally be left as is. It simply takes care of
   ;; receiving segments from the ingress task
   p-ext/Pipeline
-  (read-batch 
+  (read-batch
     [_ event]
     (function/read-batch event))
 
-  (write-batch 
+  (write-batch
     ;; Write the batch that was read out to your datasink. 
     ;; In this case we are swapping onto a collection in an atom
     ;; Messages are on the leaves :tree, as :onyx/fn is called
@@ -35,7 +35,7 @@
       (swap! example-datasink conj (:message msg)))
     {})
 
-  (seal-resource 
+  (seal-resource
     ;; Clean up any resources you opened.
     ;; If relevant, put a :done on your datasource so that
     ;; any readers will know the data sink has been sealed

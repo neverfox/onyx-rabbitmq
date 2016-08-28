@@ -14,20 +14,20 @@
 (taoensso.timbre/set-level! :debug)
 
 (def env-config
-  {:onyx/tenancy-id id
-   :zookeeper/address "127.0.0.1:2188"
-   :zookeeper/server? true
+  {:onyx/tenancy-id       id
+   :zookeeper/address     "127.0.0.1:2188"
+   :zookeeper/server?     true
    :zookeeper.server/port 2188})
 
 (def peer-config
-  {:onyx/tenancy-id id
-   :zookeeper/address "127.0.0.1:2188"
-   :onyx.peer/job-scheduler :onyx.job-scheduler/greedy
+  {:onyx/tenancy-id                       id
+   :zookeeper/address                     "127.0.0.1:2188"
+   :onyx.peer/job-scheduler               :onyx.job-scheduler/greedy
    :onyx.messaging.aeron/embedded-driver? true
-   :onyx.messaging/allow-short-circuit? false
-   :onyx.messaging/impl :aeron
-   :onyx.messaging/peer-port-range [40200 40260]
-   :onyx.messaging/bind-addr "localhost"})
+   :onyx.messaging/allow-short-circuit?   false
+   :onyx.messaging/impl                   :aeron
+   :onyx.messaging/peer-port-range        [40200 40260]
+   :onyx.messaging/bind-addr              "localhost"})
 
 (def test-env (onyx.api/start-env env-config))
 
@@ -54,28 +54,28 @@
 (def rabbitmq-deserializer (or (env :rabbitmq-deserializer) :onyx.plugin.rabbit/edn-deserializer))
 
 (def catalog
-  [{:onyx/name :in
-    :onyx/plugin :onyx.plugin.rabbitmq-input/input
-    :onyx/type :input
-    :onyx/medium :rabbitmq
-    :onyx/batch-size batch-size
-    :onyx/max-peers 1
-    :rabbit/queue-name test-queue-name
-    :rabbit/host rabbitmq-host
-    :rabbit/port rabbitmq-port
-    :rabbit/key rabbitmq-key
-    :rabbit/crt rabbitmq-crt
-    :rabbit/ca-crt rabbitmq-ca-crt
+  [{:onyx/name           :in
+    :onyx/plugin         :onyx.plugin.rabbitmq-input/input
+    :onyx/type           :input
+    :onyx/medium         :rabbitmq
+    :onyx/batch-size     batch-size
+    :onyx/max-peers      1
+    :rabbit/queue-name   test-queue-name
+    :rabbit/host         rabbitmq-host
+    :rabbit/port         rabbitmq-port
+    :rabbit/key          rabbitmq-key
+    :rabbit/crt          rabbitmq-crt
+    :rabbit/ca-crt       rabbitmq-ca-crt
     :rabbit/deserializer rabbitmq-deserializer
-    :onyx/doc "Read segments from rabbitmq queue"}
+    :onyx/doc            "Read segments from rabbitmq queue"}
 
-   {:onyx/name :out
-    :onyx/plugin :onyx.plugin.core-async/output
-    :onyx/type :output
-    :onyx/medium :core.async
+   {:onyx/name       :out
+    :onyx/plugin     :onyx.plugin.core-async/output
+    :onyx/type       :output
+    :onyx/medium     :core.async
     :onyx/batch-size batch-size
-    :onyx/max-peers 1
-    :onyx/doc "Writes segments to a core.async channel"}])
+    :onyx/max-peers  1
+    :onyx/doc        "Writes segments to a core.async channel"}])
 
 (def workflow [[:in :out]])
 
@@ -88,16 +88,16 @@
   {:lifecycle/before-task-start inject-out-ch})
 
 (def lifecycles
-  [{:lifecycle/task :in
+  [{:lifecycle/task  :in
     :lifecycle/calls :onyx.plugin.rabbitmq-input/reader-calls}
-   {:lifecycle/task :out
+   {:lifecycle/task  :out
     :lifecycle/calls ::out-calls}
-   {:lifecycle/task :out
+   {:lifecycle/task  :out
     :lifecycle/calls :onyx.plugin.core-async/writer-calls}])
 
 (let [serializer (rmq-plugin/resolve-keyword rabbitmq-serializer)
-      ctx (rmq/start-publisher (rmq-plugin/task-map->rabbit-params (first catalog)) serializer)
-      ch (:write-ch ctx)]
+      ctx        (rmq/start-publisher (rmq-plugin/task-map->rabbit-params (first catalog)) serializer)
+      ch         (:write-ch ctx)]
   (doseq [n (range n-messages)]
     (>!! ch {:n n}))
   (>!! ch :done)
@@ -107,9 +107,9 @@
 
 (onyx.api/submit-job
  peer-config
- {:catalog catalog
-  :workflow workflow
-  :lifecycles lifecycles
+ {:catalog        catalog
+  :workflow       workflow
+  :lifecycles     lifecycles
   :task-scheduler :onyx.task-scheduler/balanced})
 
 (def results (take-segments! out-chan))
