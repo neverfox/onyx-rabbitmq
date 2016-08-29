@@ -1,9 +1,10 @@
 (ns onyx.plugin.rabbitmq-input
   (:require
    [clojure.core.async :refer [<!! alts!! chan timeout]]
+   [hara.component :as component]
    [onyx.peer.function :as function]
    [onyx.peer.pipeline-extensions :as p-ext]
-   [onyx.plugin.rabbit :as rmq]
+   [onyx.rabbitmq :as rmq]
    [onyx.static.default-vals :refer [arg-or-default defaults]]
    [onyx.types :as t]
    [taoensso.timbre :as timbre :refer [debug info]]))
@@ -21,7 +22,7 @@
     [this event]
     (function/write-batch event))
 
-  (read-batch [_ {:keys [rabbitmq/example-datasource rabbit/in-ch rabbit/context] :as event}]
+  (read-batch [_ {:keys [rabbitmq/example-datasource rabbitmq/in-ch rabbitmq/context] :as event}]
     (let [pending          (count @pending-messages)
           max-segments     (min (- max-pending pending) batch-size)
           ;; Read a batch of up to batch-size from your data-source
@@ -53,7 +54,7 @@
       ;; And also ack the :done message in rabbitmq
       (when (input-drained? pending-messages batch)
         (let [done-segment-id (:id (first batch))]
-          (rmq/ack (:ch context) (get @delivery-tags done-segment-id))
+          (rmq/ack context (get @delivery-tags done-segment-id))
           (swap! delivery-tags dissoc done-segment-id)
           (reset! drained? true)))
       {:onyx.core/batch batch}))
@@ -63,10 +64,10 @@
     )
 
   p-ext/PipelineInput
-  (ack-segment [_ {:keys [rabbit/context]} segment-id]
+  (ack-segment [_ {:keys [rabbitmq/context]} segment-id]
     ;; When a message is fully acked you can remove it from pending-messages
     ;; Generally this can be left as is.
-    (rmq/ack (:ch context) (get @delivery-tags segment-id))
+    (rmq/ack context (get @delivery-tags segment-id))
     (swap! delivery-tags dissoc segment-id)
     (swap! pending-messages dissoc segment-id))
 
@@ -78,7 +79,7 @@
     ;; Take the message out of your pending-messages atom, and put it
     ;; back into a datasource or a buffer that are you are reading into
     (when-let [msg (get @pending-messages segment-id)]
-      (rmq/requeue (:ch context) (get @delivery-tags segment-id))
+      (rmq/requeue context (get @delivery-tags segment-id))
       (swap! pending-messages dissoc segment-id)
       (swap! delivery-tags dissoc segment-id)))
 
@@ -97,8 +98,8 @@
 ;; It is highly recommended you inject and pre-calculate frequently used data
 ;; from your task-map here, in order to improve the performance of your plugin
 ;; Extending the function below is likely good for most use cases.
-(defn input [event]
-  (let [task-map         (:onyx.core/task-map event)
+(defn input [pipeline-data]
+  (let [task-map         (:onyx.core/task-map pipeline-data)
         max-pending      (arg-or-default :onyx/max-pending task-map)
         batch-size       (:onyx/batch-size task-map)
         batch-timeout    (arg-or-default :onyx/batch-timeout task-map)
@@ -108,10 +109,9 @@
     (->RabbitInput max-pending batch-size batch-timeout pending-messages delivery-tags drained?)))
 
 (defn task-map->rabbit-params
-  [{:keys [rabbit/queue-name rabbit/host rabbit/port rabbit/key rabbit/crt rabbit/ca-crt]}]
-  {:queue-name queue-name
-   :host       host :port port
-   :key        key  :crt  crt :ca-crt ca-crt})
+  [{:keys [rabbitmq/queue rabbitmq/uri rabbitmq/key rabbitmq/crt rabbitmq/ca-crt]}]
+  {:queue queue :uri uri
+   :key   key   :crt crt :ca-crt ca-crt})
 
 (defn resolve-keyword
   [kw]
@@ -120,17 +120,19 @@
     (ns-resolve namespace f)))
 
 (defn start-rabbit-consumer
-  [{:keys [onyx.core/task-map] :as event} lifecycle]
-  (let [ch           (chan 1000)
-        deserializer (resolve-keyword (:rabbit/deserializer task-map))
-        ctx          (rmq/start-consumer (task-map->rabbit-params task-map) deserializer ch)
-        ]
-    {:rabbit/in-ch   ch
-     :rabbit/context ctx}))
+  [{:keys [onyx.core/task-map onyx.core/pipeline] :as event} lifecycle]
+  (let [ch              (chan 1000)
+        deserializer-fn (resolve-keyword (:rabbitmq/deserializer-fn task-map))
+        ctx             (component/start
+                         (rmq/new-rabbit-consumer {:params          (task-map->rabbit-params task-map)
+                                                   :deserializer-fn deserializer-fn
+                                                   :write-to-ch     ch}))]
+    {:rabbitmq/in-ch   ch
+     :rabbitmq/context ctx}))
 
 (defn stop-rabbit-connection
-  [{:keys [rabbit/context] :as event} lifecycle]
-  (rmq/stop context))
+  [{:keys [rabbitmq/context] :as event} lifecycle]
+  (component/stop context))
 
 (def reader-calls
   {:lifecycle/before-task-start start-rabbit-consumer
