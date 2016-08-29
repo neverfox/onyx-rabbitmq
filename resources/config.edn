@@ -1,0 +1,22 @@
+{:zookeeper #profile {:default #or [#env ZOOKEEPER "zookeeper"]
+                      :test    "127.0.0.1:2188"}
+ :env-config
+ {:onyx/tenancy-id       #or [#env ONYX_ID "testcluster"]
+  :zookeeper/address     ^:ref [:zookeeper]
+  :zookeeper/server?     #profile {:default false
+                                   :test    true}
+  :zookeeper.server/port 2188}
+ :peer-config
+ {:onyx/tenancy-id                       #or [#env ONYX_ID "testcluster"]
+  :zookeeper/address                     ^:ref [:zookeeper]
+  :onyx.peer/job-scheduler               :onyx.job-scheduler/greedy
+  :onyx.peer/zookeeper-timeout           60000
+  :onyx.messaging/allow-short-circuit?   #profile {:default true
+                                                   :test    false}
+  :onyx.messaging/impl                   :aeron
+  :onyx.messaging/bind-addr              #or [#env BIND_ADDR "localhost"]
+  :onyx.messaging/peer-port              40200
+  :onyx.messaging.aeron/embedded-driver? #profile {:default false
+                                                   :test    true}}
+ :rabbitmq-config
+ {:rabbitmq/uri #or [#env RABBITMQ_URI "amqp://192.168.99.100:5672"]}}
