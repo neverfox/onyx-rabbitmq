@@ -1,0 +1,3 @@
+rabbitmq:
+  image: rabbitmq:management
+  hostname: my-rabbit
